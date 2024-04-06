@@ -1,8 +1,10 @@
 package com.example.ecommerce.configuration;
 
+import com.example.ecommerce.filters.JwtRequestFiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -24,17 +26,17 @@ public class WebSecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.csrf().disable()
-                .authorizeHttpRequests()
-                .requestMatchers("/authenticate", "/sign-up").permitAll()
-                .and()
-                .authorizeHttpRequests().requestMatchers("/api/**")
-                .authenticated().and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
+        http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/sign-up").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 
     @Bean
